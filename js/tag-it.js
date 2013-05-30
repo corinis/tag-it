@@ -282,9 +282,15 @@
             if (this.options.availableTags || this.options.tagSource || this.options.autocomplete.source) {
                 var autocompleteOptions = {
                     select: function(event, ui) {
-                        that.createTag(ui.item.value);
+                        that.createTag(ui.item);
                         // Preventing the tag input to be updated with the chosen value.
                         return false;
+                    },
+                    open: function(event, ui) {
+                    	that.tagInput.data('autocomplete-open', true);
+                    },
+                    close: function(event, ui) {
+                    	that.tagInput.data('autocomplete-open', false);
                     }
                 };
                 $.extend(autocompleteOptions, this.options.autocomplete);
@@ -293,11 +299,7 @@
                 // while tagSource is left null by default.
                 autocompleteOptions.source = this.options.tagSource || autocompleteOptions.source;
 
-                this.tagInput.autocomplete(autocompleteOptions).bind('autocompleteopen', function(event, ui) {
-                    that.tagInput.data('autocomplete-open', true);
-                }).bind('autocompleteclose', function(event, ui) {
-                    that.tagInput.data('autocomplete-open', false)
-                });
+                this.tagInput.autocomplete(autocompleteOptions);
             }
         },
 
@@ -386,16 +388,28 @@
             return Boolean($.effects && ($.effects[name] || ($.effects.effect && $.effects.effect[name])));
         },
 
+	/**
+	 * @param value either a string (the tagLabel) or an object: { label: "label", data: "attachdata" }
+	 */
         createTag: function(value, additionalClass, duringInitialization) {
             var that = this;
-
+            var data = null;
+            // allow value to be an object - take the label then
+            if($.isPlainObject(value)) {
+            	data = value.data;
+            	if(value.value)
+            		value = value.value;
+            	else
+            		value = value.label;
+            }
+            
             value = $.trim(value);
 
             if(this.options.preprocessTag) {
-                value = this.options.preprocessTag(value);
+                value = this.options.preprocessTag(value, data);
             }
 
-            if (value === '') {
+            if (value === '' || !value) {
                 return false;
             }
 
@@ -424,7 +438,11 @@
                 .addClass('tagit-choice ui-widget-content ui-state-default ui-corner-all')
                 .addClass(additionalClass)
                 .append(label);
-
+            
+            if(data !== null) {
+            	tag.data().value = data;
+            }
+            
             if (this.options.readOnly){
                 tag.addClass('tagit-choice-read-only');
             } else {
