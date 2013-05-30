@@ -332,6 +332,21 @@
             }
             return tags;
         },
+		
+		/**
+		 * @return a list of objects (if available), otherwise this returns the same as assignedTags
+		 */
+		assignedObjects: function () {
+			var that = this;
+			var tags = [];
+			this._tags().each(function() {
+				if($(this).data().value)
+					tags.push($(this).data().value);
+				else
+					tags.push(that.tagLabel(this));
+			});
+			return tags;
+		},
 
         _updateSingleTagsField: function(tags) {
             // Takes a list of tag string values, updates this.options.singleFieldNode.val to the tags delimited by this.options.singleFieldDelimiter
@@ -388,9 +403,9 @@
             return Boolean($.effects && ($.effects[name] || ($.effects.effect && $.effects.effect[name])));
         },
 
-	/**
-	 * @param value either a string (the tagLabel) or an object: { label: "label", data: "attachdata" }
-	 */
+		/**
+		* @param value either a string (the tagLabel) or an object: { label: "label", data: "attachdata" }
+		*/
         createTag: function(value, additionalClass, duringInitialization) {
             var that = this;
             var data = null;
@@ -494,6 +509,8 @@
                 duringInitialization: duringInitialization
             });
 
+			this.element.trigger("change");
+			
             if (this.options.showAutocompleteOnFocus && !duringInitialization) {
                 setTimeout(function () { that._showAutocomplete(); }, 0);
             }
@@ -528,12 +545,14 @@
                 hide_args.push(function() {
                     tag.remove();
                     thisTag._trigger('afterTagRemoved', null, {tag: tag, tagLabel: thisTag.tagLabel(tag)});
+					this.element.trigger("change");
                 });
 
                 tag.fadeOut('fast').hide.apply(tag, hide_args).dequeue();
             } else {
                 tag.remove();
                 this._trigger('afterTagRemoved', null, {tag: tag, tagLabel: this.tagLabel(tag)});
+				this.element.trigger("change");
             }
 
         },
